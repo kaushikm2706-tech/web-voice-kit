@@ -5,7 +5,9 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "examples", "vo
 import extract as ex
 
 path = sys.argv[1] if len(sys.argv) > 1 else os.path.join(os.path.dirname(__file__), "eval-set.json")
-data = json.load(open(path, encoding="utf-8"))
+all_rows = json.load(open(path, encoding="utf-8"))
+data = [r for r in all_rows if r["note"] not in ("yes", "no")]        # amount/day clips
+yn = [r for r in all_rows if r["note"] in ("yes", "no")]               # confirmation clips
 
 def key(d):
     return None if not d else (d["kind"], d.get("weekday"), d.get("date"), d.get("modifier"))
@@ -52,4 +54,14 @@ if fails:
     for r, p, a_ok, d_ok in fails:
         print(f"- {r['transcript']}\n    wanted {r['expectedAmount']} / {r['expectedDay']!r}   got {p['amount']} / {p['day']}   "
               f"[amount {'ok' if a_ok else 'BAD'}, day {'ok' if d_ok else 'BAD'}]")
+if yn:
+    print("\nCONFIRMATION (yes/no after the read-back)")
+    bad = 0
+    for r in yn:
+        got = ex.confirm_intent(r["transcript"])["intent"]
+        ok = got == r["note"]
+        bad += (not ok)
+        if not ok:
+            print(f"- {r['transcript']}  wanted {r['note']}  got {got}")
+    print(f"  correct: {pct(len(yn)-bad, len(yn))}   (an 'unclear' makes the agent ask again)")
 print("\nNOTE: the extractor was tuned while looking at these same clips, so these numbers are optimistic.")

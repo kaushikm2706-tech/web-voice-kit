@@ -175,6 +175,8 @@ def _num_token(t):
     if t in _RAW_NUM:
         return _RAW_NUM[t]
     s = skel(t)
+    if s == "prt" and "ர்ட" not in t:      # "ஃபோர்ட்டி" (forty) has ர் + ட; "பேரடே" ("vera day") does not
+        return None
     if len(s) >= 2 and s in _SKEL_NUM:
         return _SKEL_NUM[s]
     return None
@@ -303,3 +305,24 @@ def extract(text: str, today: dt.date):
         ask = f"I heard {inr(amount)} on {when.strftime('%A, %d %B')}. Is that right?"
     return {"amount": amount, "day": day, "date": when, "confirm_prompt": ask,
             "needs_clarification": amount is None or day is None or low or when is None}
+
+
+# ---------------------------------------------------------------- yes / no after the read-back
+_YES_RAW = ("ஆம", "சரி", "யெஸ்", "எஸ்", "கரெக்ட்", "கரக்ட்", "ரைட்", "ஓகே", "ஒகே")
+_YES_EN = ("yes", "yeah", "yep", "correct", "right", "ok", "okay", "sure")
+_NO_RAW = ("இல்ல", "நோ", "ராங்", "ரோங்", "தப்", "வேண்டா")
+_NO_EN = ("no", "nope", "wrong", "incorrect")
+
+
+def confirm_intent(text: str):
+    """What the caller said after the read-back: yes, no (maybe with a correction), or unclear.
+    Both a yes-word and a no-word in one reply is 'unclear' on purpose: for a payment, ask again."""
+    toks = tokens(text)
+    yes = any(t.startswith(_YES_RAW) or t in _YES_EN for t in toks)
+    no = any(t.startswith(_NO_RAW) or t in _NO_EN for t in toks)
+    if yes and not no:
+        return {"intent": "yes", "amount": None, "day": None}
+    if no and not yes:
+        p = parse(text)                       # "இல்லை, த்ரீ தௌசண்ட்" = no, and the amount is 3000
+        return {"intent": "no", "amount": p["amount"], "day": p["day"]}
+    return {"intent": "unclear", "amount": None, "day": None}
