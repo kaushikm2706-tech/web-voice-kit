@@ -338,5 +338,15 @@
     "expectedAmount": null,
     "expectedDay": "",
     "note": "no"
+  },
+  {
+    "id": "live-call-1",
+    "createdAt": "2026-10-27T12:44:00.000Z",
+    "lang": "ta-IN",
+    "format": "transcribe",
+    "transcript": "தௌசண்ட் ரூபீஸ்",
+    "expectedAmount": 3000,
+    "expectedDay": "",
+    "note": "live call: speaker said 'three thousand rupees', STT dropped 'three'"
   }
 ]

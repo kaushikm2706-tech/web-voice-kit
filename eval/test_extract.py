@@ -29,4 +29,10 @@ _c = ex.turn("இல்லை த்ரீ தௌசண்ட்", _t, _b["amoun
 r.append(check("turn: correction replaces amount, keeps day", _c["amount"] == 3000 and str(_c["date"]) == "2026-10-30"))
 _d = ex.turn("நான் ஏ கட்டுமாரோ ஃபிஃப்டி தௌசண்ட்", _t)
 r.append(check("turn: garbled day is never stored, agent asks", _d["day"] is None and _d["needs_clarification"]))
+_e = ex.turn("தௌசண்ட் ரூபீஸ்", _t)          # real live-call case: "three thousand" came back as just "thousand"
+r.append(check("bare 'thousand' is NOT guessed as 1,000: agent asks", _e["amount"] is None and _e["needs_clarification"] and "how much exactly" in _e["confirm_prompt"].lower()))
+_f = ex.turn("தௌசண்ட் ரூபீஸ்", _t, 2500, {"kind": "tomorrow", "conf": "high", "modifier": None})
+r.append(check("bare 'thousand' also drops a stale earlier amount", _f["amount"] is None))
+r.append(check("'three thousand' still fine", ex.parse("த்ரீ தௌசண்ட் ருபீஸ்")["amount"] == 3000))
+r.append(check("Tamil 'ஆயிரம்' alone is a normal 1000", ex.parse("ஆயிரம் ரூபாய்")["amount"] == 1000))
 print("ALL PASS" if all(r) else "SOME FAILED"); sys.exit(0 if all(r) else 1)

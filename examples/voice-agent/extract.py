@@ -239,12 +239,17 @@ def parse(text: str):
     def near(run):
         return min((min(abs(r - run[0][3] + 1), abs(r - run[-1][3] - 1)) for r in rupee_idx), default=99)
 
-    amount = None
+    amount, unsure = None, False
     if runs:
         best = min(runs, key=lambda r: (near(r), runs.index(r)))
         v = _run_value([(e[1], e[2]) for e in best])
         amount = v if v > 0 else None
-    return {"amount": amount, "day": day}
+        # "தௌசண்ட் ரூபீஸ்" with nothing before it: the speech-to-text may have DROPPED the number ("three").
+        # Real case from a live call: "three thousand" came back as just "thousand". Do not guess 1,000: ask.
+        first = best[0]
+        if first[1] == "m" and not toks[first[3]].startswith(("ஆயிரம்", "நூறு")):
+            amount, unsure = None, True
+    return {"amount": amount, "day": day, "amount_unsure": unsure}
 
 
 # ---------------------------------------------------------------- dates + read-back
@@ -292,11 +297,13 @@ def spoken_inr(n: int) -> str:
     return inr(n)[1:] + " rupees"
 
 
-def assess(amount, day, today: dt.date, day_unsure: bool = False):
+def assess(amount, day, today: dt.date, day_unsure: bool = False, amount_unsure: bool = False):
     """Given what we know so far, say what to ask or read back next."""
     when = resolve(day, today)
     low = day_unsure and day is None
-    if amount is None and (day is None or low):
+    if amount is None and amount_unsure:
+        ask = "I am not sure I heard the full amount. How much exactly? For example, three thousand rupees."
+    elif amount is None and (day is None or low):
         ask = "I did not catch the amount or the day. Could you say both again?"
     elif amount is None:
         ask = "How much will you pay?"
@@ -323,7 +330,10 @@ def turn(text: str, today: dt.date, amount=None, day=None):
     p = parse(text)
     new_day = p["day"] if p["day"] and p["day"]["conf"] == "high" else None
     unsure = bool(p["day"] and p["day"]["conf"] == "low")
-    return assess(p["amount"] if p["amount"] is not None else amount, new_day or day, today, day_unsure=unsure)
+    if p["amount_unsure"]:
+        amount = None
+    return assess(p["amount"] if p["amount"] is not None else amount, new_day or day, today,
+                  day_unsure=unsure, amount_unsure=p["amount_unsure"])
 
 
 # ---------------------------------------------------------------- yes / no after the read-back
