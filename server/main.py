@@ -12,6 +12,7 @@ from fastapi.responses import Response
 from pydantic import BaseModel, Field
 
 from .limits import RateLimiter
+from .stt import router as stt_router
 
 load_dotenv(Path(__file__).resolve().parent.parent / ".env")
 
@@ -19,6 +20,7 @@ GNANI_BASE = "https://api.vachana.ai"
 TTS_PATH = "/api/v1/tts/inference"
 
 app = FastAPI(title="web-voice-kit (UNOFFICIAL, not affiliated with Gnani AI)")
+app.include_router(stt_router)
 limiter = RateLimiter(max_calls=int(os.getenv("TTS_CALLS_PER_HOUR", "20")), window_s=3600)
 
 
