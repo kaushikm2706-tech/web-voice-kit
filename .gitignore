@@ -6,3 +6,4 @@ __pycache__/
 out.wav
 *.wav
 !eval/clips/*.wav
+dist/
