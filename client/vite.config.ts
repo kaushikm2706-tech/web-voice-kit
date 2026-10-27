@@ -9,6 +9,7 @@ export default defineConfig({
     proxy: {
       "/stt": { target: "ws://localhost:8000", ws: true },
       "/tts": { target: "http://localhost:8000" },
+      "/agent": { target: "http://localhost:8000" },
     },
   },
 });

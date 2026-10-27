@@ -7,3 +7,5 @@ out.wav
 *.wav
 !eval/clips/*.wav
 dist/
+
+_to_delete/

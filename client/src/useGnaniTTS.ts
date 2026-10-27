@@ -13,12 +13,16 @@ export function useGnaniTTS(endpoint = "/tts") {
   const [error, setError] = useState<string | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const urlRef = useRef<string | null>(null);
+  const doneRef = useRef<(() => void) | null>(null);
 
   const release = useCallback(() => {
     audioRef.current?.pause();
     audioRef.current = null;
     if (urlRef.current) URL.revokeObjectURL(urlRef.current);
     urlRef.current = null;
+    const done = doneRef.current; // wake up whoever is awaiting speak()
+    doneRef.current = null;
+    done?.();
   }, []);
 
   const speak = useCallback(
@@ -26,6 +30,9 @@ export function useGnaniTTS(endpoint = "/tts") {
       release();
       setError(null);
       setSpeaking(true);
+      const finished = new Promise<void>((resolve) => {
+        doneRef.current = resolve;
+      });
       try {
         const res = await fetch(endpoint, {
           method: "POST",
@@ -57,6 +64,7 @@ export function useGnaniTTS(endpoint = "/tts") {
         setSpeaking(false);
         release();
       }
+      return finished; // resolves when playback ends, fails, or is stopped
     },
     [endpoint, release],
   );

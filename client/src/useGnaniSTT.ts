@@ -21,6 +21,8 @@ export interface UseGnaniSTTOptions {
   url?: string;
   /** Where the AudioWorklet file is served from. Default /pcm-worklet.js */
   workletUrl?: string;
+  /** Called with each transcript line as it arrives (in addition to `segments`). */
+  onTranscript?: (text: string) => void;
 }
 
 // If more than ~1 s of audio is waiting in the browser's send buffer, drop frames
@@ -33,7 +35,9 @@ function defaultUrl(): string {
 }
 
 export function useGnaniSTT(options: UseGnaniSTTOptions = {}) {
-  const { lang = "en-IN", format = "verbatim", url, workletUrl = "/pcm-worklet.js" } = options;
+  const { lang = "en-IN", format = "verbatim", url, workletUrl = "/pcm-worklet.js", onTranscript } = options;
+  const onTranscriptRef = useRef(onTranscript);
+  onTranscriptRef.current = onTranscript;
   const [status, setStatus] = useState<STTStatus>("idle");
   const [segments, setSegments] = useState<Segment[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -122,6 +126,7 @@ export function useGnaniSTT(options: UseGnaniSTTOptions = {}) {
         if (msg.type === "transcript" && msg.text) {
           const id = msg.segment_id ?? String(msg.segment_index ?? Date.now());
           setSegments((prev) => [...prev, { id, text: msg.text as string, latencyMs: msg.latency }]);
+          onTranscriptRef.current?.(msg.text);
         } else if (msg.type === "error") {
           fail(msg.message ?? "The server reported an error.");
         }

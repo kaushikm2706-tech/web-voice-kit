@@ -121,7 +121,7 @@ def _day_at(toks, i):
     if t.startswith(("இன்று", "இன்றை", "இன்னை")) or t == "today":
         return {"kind": "today", "conf": hi}, 1
     # Friday ("ஃப்ரைடே") and forty ("ஃபோர்ட்டி") share the skeleton "prt": tell them apart on the raw spelling.
-    if t.startswith(("ஃப்ரை", "ப்ரை", "ஃப்ரெ", "ப்ரெ")):
+    if t.startswith(("ஃப்ரை", "ப்ரை", "ஃப்ரெ", "ப்ரெ", "ஃபிரை", "பிரை", "ஃபிரெ", "பிரெ")):
         return {"kind": "weekday", "weekday": _FRI, "conf": hi}, 1
     for pre, wd in _TAMIL_DAYS:
         if t.startswith(pre):
@@ -287,24 +287,43 @@ def inr(n: int) -> str:
     return f"₹{head},{tail}"
 
 
-def extract(text: str, today: dt.date):
-    """Full result for the agent: what was heard, what to say back, and what to ask."""
-    p = parse(text)
-    amount, day = p["amount"], p["day"]
+def spoken_inr(n: int) -> str:
+    """For text-to-speech: '2,500 rupees' (we do not know how every TTS voice reads the ₹ sign)."""
+    return inr(n)[1:] + " rupees"
+
+
+def assess(amount, day, today: dt.date, day_unsure: bool = False):
+    """Given what we know so far, say what to ask or read back next."""
     when = resolve(day, today)
-    low = bool(day and day["conf"] == "low")
+    low = day_unsure and day is None
     if amount is None and (day is None or low):
         ask = "I did not catch the amount or the day. Could you say both again?"
     elif amount is None:
         ask = "How much will you pay?"
     elif day is None or low:
-        ask = f"I heard {inr(amount)}. On which day will you pay?"
+        ask = f"I heard {spoken_inr(amount)}. On which day will you pay?"
     elif when is None:
-        ask = f"I heard {inr(amount)} next week. Which day next week?"
+        ask = f"I heard {spoken_inr(amount)} next week. Which day next week?"
     else:
-        ask = f"I heard {inr(amount)} on {when.strftime('%A, %d %B')}. Is that right?"
+        ask = f"I heard {spoken_inr(amount)} on {when.strftime('%A, %d %B')}. Is that right?"
+    needs = amount is None or day is None or low or when is None
+    summary = f"{spoken_inr(amount)} on {when.strftime('%A, %d %B %Y')}" if not needs else None
     return {"amount": amount, "day": day, "date": when, "confirm_prompt": ask,
-            "needs_clarification": amount is None or day is None or low or when is None}
+            "needs_clarification": needs, "summary": summary}
+
+
+def extract(text: str, today: dt.date):
+    """One utterance, nothing known before."""
+    return turn(text, today)
+
+
+def turn(text: str, today: dt.date, amount=None, day=None):
+    """One caller utterance merged with what we already know. New information replaces old;
+    a doubtful day (low confidence) is never stored, the agent asks instead."""
+    p = parse(text)
+    new_day = p["day"] if p["day"] and p["day"]["conf"] == "high" else None
+    unsure = bool(p["day"] and p["day"]["conf"] == "low")
+    return assess(p["amount"] if p["amount"] is not None else amount, new_day or day, today, day_unsure=unsure)
 
 
 # ---------------------------------------------------------------- yes / no after the read-back

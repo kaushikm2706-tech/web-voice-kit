@@ -15,6 +15,7 @@ from pydantic import BaseModel, Field
 load_dotenv(Path(__file__).resolve().parent.parent / ".env")
 
 from .limits import RateLimiter
+from .agent import router as agent_router
 from .stt import router as stt_router
 
 
@@ -23,6 +24,7 @@ TTS_PATH = "/api/v1/tts/inference"
 
 app = FastAPI(title="web-voice-kit (UNOFFICIAL, not affiliated with Gnani AI)")
 app.include_router(stt_router)
+app.include_router(agent_router)
 limiter = RateLimiter(max_calls=int(os.getenv("TTS_CALLS_PER_HOUR", "20")), window_s=3600)
 
 
