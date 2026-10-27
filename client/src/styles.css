@@ -6,6 +6,7 @@ h2 { font-size: 1.1rem; margin: 24px 0 8px; }
 .note { font-size: 0.85rem; opacity: 0.75; margin: 0 0 20px; }
 .row { display: flex; gap: 12px; align-items: end; flex-wrap: wrap; margin: 12px 0; }
 label { display: flex; flex-direction: column; gap: 4px; font-size: 0.85rem; }
+input { font: inherit; padding: 8px 12px; border-radius: 8px; border: 1px solid #8886; background: Field; color: FieldText; width: 180px; }
 select, button { font: inherit; padding: 8px 12px; border-radius: 8px; border: 1px solid #8886; background: Field; color: FieldText; }
 button { cursor: pointer; background: #2563eb; color: #fff; border-color: #2563eb; }
 button.stop { background: #b91c1c; border-color: #b91c1c; }

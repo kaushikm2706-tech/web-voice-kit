@@ -11,10 +11,12 @@ from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import Response
 from pydantic import BaseModel, Field
 
+# Load .env BEFORE importing modules that read settings from the environment at import time.
+load_dotenv(Path(__file__).resolve().parent.parent / ".env")
+
 from .limits import RateLimiter
 from .stt import router as stt_router
 
-load_dotenv(Path(__file__).resolve().parent.parent / ".env")
 
 GNANI_BASE = "https://api.vachana.ai"
 TTS_PATH = "/api/v1/tts/inference"

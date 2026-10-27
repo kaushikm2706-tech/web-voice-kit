@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { useGnaniSTT } from "./useGnaniSTT";
 import { useGnaniTTS } from "./useGnaniTTS";
+import EvalCollector from "./EvalCollector";
 
 const LANGS: [string, string][] = [
   ["en-IN", "English (India)"],
@@ -96,6 +97,8 @@ export default function App() {
         </div>
       )}
       {tts.error && <p className="error">{tts.error}</p>}
+
+      <EvalCollector transcript={stt.segments.map((s) => s.text).join(" ")} lang={lang} format={format} />
     </main>
   );
 }
