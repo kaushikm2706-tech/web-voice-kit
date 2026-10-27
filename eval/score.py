@@ -1,5 +1,8 @@
 """Score the extractor on the labelled clips.   Run: python eval/score.py [path-to-eval-set.json]
 Counts each clip as one of: correct, ASKS (agent would ask the caller again: safe), WRONG (confident and wrong: dangerous)."""
+import sys
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8")   # Tamil text on Windows consoles
 import datetime as dt, json, os, sys
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "examples", "voice-agent"))
 import extract as ex

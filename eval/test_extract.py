@@ -1,4 +1,7 @@
 """Edge cases found by reading results, not only by the score.   Run: python eval/test_extract.py"""
+import sys
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8")   # Tamil text on Windows consoles
 import os, sys
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "examples", "voice-agent"))
 import extract as ex

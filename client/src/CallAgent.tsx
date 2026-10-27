@@ -131,6 +131,8 @@ export default function CallAgent() {
   }, []);
 
   const inCall = phase !== "idle" && phase !== "finished";
+  // Audio spoken before the connection to Gnani is open is dropped, so only say "speak now" once it really is open.
+  const pillText = phase === "listening" ? (stt.status === "listening" ? "listening - speak now" : "connecting mic...") : phase;
 
   return (
     <section data-testid="call-agent">
@@ -148,7 +150,7 @@ export default function CallAgent() {
           <button onClick={() => void startCall()}>Start call</button>
         )}
         <span className="pill" data-testid="call-phase">
-          {phase}
+          {pillText}
         </span>
       </div>
       {error && (

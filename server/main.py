@@ -95,3 +95,12 @@ async def tts(req: TTSRequest, request: Request):
     else:
         msg = f"Gnani returned {r.status_code}. Gnani said: " + upstream
     raise HTTPException(status_code=502 if r.status_code >= 500 else r.status_code, detail=msg)
+
+
+# Optional: serve the built demo page from this same server (run `npm run build` inside client/ first).
+# Registered last, so /tts, /stt, /agent and /health keep working.
+_dist = Path(__file__).resolve().parent.parent / "client" / "dist"
+if _dist.is_dir():
+    from fastapi.staticfiles import StaticFiles
+
+    app.mount("/", StaticFiles(directory=_dist, html=True), name="demo")
