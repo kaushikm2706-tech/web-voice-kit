@@ -1,0 +1,8 @@
+.env
+.venv/
+node_modules/
+__pycache__/
+*.pyc
+out.wav
+*.wav
+!eval/clips/*.wav
