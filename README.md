@@ -109,6 +109,20 @@ Extractor results on my 23 development clips (one speaker, one microphone, my ow
 same clips, so they are optimistic. Reproduce them with `python eval/score.py`. A fresh set that the code never saw is
 planned in `eval/HOLDOUT.md`, and that result will be added here, whatever it shows.
 
+### Holdout result (14 fresh sentences, frozen code at tag `extractor-v1`)
+
+| What | Correct | Asked again | Confidently wrong |
+|---|---|---|---|
+| Amount | 12 / 14 | 1 | 1 (75,000 heard as 5,000) |
+| Day | 11 / 14 | 2 | 1 (spoken "next Monday" came back as "Monday") |
+| Both right | **9 / 14 (64%)** | | |
+
+So the dev-set numbers above were optimistic. Five clips failed: three because words the extractor did not know
+(seventy, "one" before thousand, the ordinals fifth and twentieth), one because the transcript had no "next", and one
+because an unknown word before "five thousand" silently turned 75,000 into 5,000. Only 14 clips, one speaker, one
+microphone: treat 64% as a rough indication, not a measured accuracy. The fixes come in a later commit, and any claim
+after them needs a new fresh set.
+
 ## Limits and things not done
 
 - One speaker, one microphone, one room. Nothing here says it works for other voices, accents or phones.
