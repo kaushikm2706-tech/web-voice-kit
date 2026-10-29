@@ -56,4 +56,11 @@ for _txt, _amt in (("நான் நாளைக்கு சிக்ஸ் �
                    ("இன்னைக்கு நைன் ஹண்ட்ரட் ருபீஸ் தரேன்", 900),
                    ("நெக்ஸ்ட் வீக் டூ தௌசண்ட் 500 ரூபீஸ் பே பண்ணுற", 2500)):
     r.append(check("guard has no false alarm: " + _txt[:28], ex.parse(_txt)["amount"] == _amt))
+# --- found by the second holdout ---
+r.append(check("'fifty fifty thousand' is NOT 100,000: ask", ex.parse("மந்த் எண்டில் ஃபிஃப்ட்டி ஃபிஃப்ட்டி தௌசண்ட் ருபீஸ்")["amount"] is None))
+r.append(check("digit + word still merges: 700 fifty", ex.parse("700 ஃபிஃப்டி ருபீஸ்")["amount"] == 750))
+r.append(check("twenty five still 25", ex.parse("டுவெண்ட்டி ஃபைவ் தௌசண்ட்")["amount"] == 25000))
+r.append(check("இன்னிக்கு is today", ex.parse("இன்னிக்கு சிக்ஸ் ஹண்ட்ரட் ருபீஸ்")["day"]["kind"] == "today"))
+r.append(check("டென்த்துக்கு is the 10th", ex.parse("டென்த்துக்கு ஃபிஃப்டீன் தௌசண்ட்")["day"]["date"] == 10))
+r.append(check("tenth did not break ten thousand", ex.parse("டென் தௌசண்ட் ருபீஸ்")["amount"] == 10000))
 print("ALL PASS" if all(r) else "SOME FAILED"); sys.exit(0 if all(r) else 1)

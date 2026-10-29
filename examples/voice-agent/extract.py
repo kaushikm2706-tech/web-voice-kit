@@ -97,7 +97,8 @@ _ORDINAL_SKEL = {"ptnt": 15, "tnt": 10, "ptt": 5}   # fifteenth, tenth (only for
 # fifth and twentieth, matched on the raw spelling (seen in the holdout: ஃபிஃப்த்துக்கு, டுவெண்ட்டியத்துக்கு).
 # Must be checked before the number words: "ஃபிஃப்த்" is fifth, "ஃபிஃப்டீன்" is fifteen.
 # thirtieth is my guess by analogy, not seen in a recording (unverified).
-_ORDINAL_RAW = [(("ஃபிஃப்த்", "ஃபிப்த்", "பிஃப்த்", "பிப்த்"), 5),
+_ORDINAL_RAW = [(("டென்த்",), 10),
+                (("ஃபிஃப்த்", "ஃபிப்த்", "பிஃப்த்", "பிப்த்"), 5),
                 (("டுவெண்ட்டியத்", "டுவென்டியத்", "டுவெண்டியத்", "ட்வென்டியத்", "ட்வென்ட்டியத்"), 20),
                 (("தர்ட்டியத்", "தேர்ட்டியத்"), 30)]
 
@@ -129,7 +130,7 @@ def _day_at(toks, i):
         return {"kind": "day_after", "conf": hi}, 2
     if t.startswith("நாளை") or (_is_latin(t) and t.startswith("tom")):
         return {"kind": "tomorrow", "conf": hi}, 1
-    if t.startswith(("இன்று", "இன்றை", "இன்னை")) or t == "today":
+    if t.startswith(("இன்று", "இன்றை", "இன்னை", "இன்னி")) or t == "today":
         return {"kind": "today", "conf": hi}, 1
     for prefixes, dom in _ORDINAL_RAW:
         if t.startswith(prefixes):
@@ -275,6 +276,13 @@ def parse(text: str):
         return min((min(abs(r - run[0][3] + 1), abs(r - run[-1][3] - 1)) for r in rupee_idx), default=99)
 
     amount, unsure = None, False
+    # Two spoken tens/teens in a row ("fifty fifty thousand") is not a number anyone says: the speech-to-text
+    # repeated or garbled a word, and adding them gave 100,000 instead of 50,000. Ask instead.
+    # (A digit followed by a word, "700 fifty", IS normal Gnani output, so only word+word counts.)
+    def _doubled(run):
+        return any(a[1] == b[1] == "n" and a[2] >= 10 and b[2] >= 10
+                   and not toks[a[3]].isdigit() and not toks[b[3]].isdigit()
+                   for a, b in zip(run, run[1:]))
     if runs:
         best = min(runs, key=lambda r: (near(r), runs.index(r)))
         v = _run_value([(e[1], e[2]) for e in best])
@@ -282,7 +290,9 @@ def parse(text: str):
         # "தௌசண்ட் ரூபீஸ்" with nothing before it: the speech-to-text may have DROPPED the number ("three").
         # Real case from a live call: "three thousand" came back as just "thousand". Do not guess 1,000: ask.
         first = best[0]
-        if first[1] == "m" and not toks[first[3]].startswith(("ஆயிரம்", "நூறு")):
+        if _doubled(best):
+            amount, unsure = None, True
+        elif first[1] == "m" and not toks[first[3]].startswith(("ஆயிரம்", "நூறு")):
             amount, unsure = None, True
         elif _unknown_word_before(toks, first[3], consumed):
             amount, unsure = None, True

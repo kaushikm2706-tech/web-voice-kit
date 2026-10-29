@@ -139,6 +139,11 @@ Failures: the transcript said "fifty fifty thousand" (the two fifties were added
 "somewhere between two-thirds and four-fifths on my own voice", not as an accuracy figure. Anything fixed after this
 point is untested until a third fresh set is recorded.
 
+After that result I fixed the three causes (commit following `e98cba8`, tag `extractor-v3`): two spoken tens in a row
+now make the agent ask, "இன்னிக்கு" is today, "டென்த்" is tenth. The three sets now score 20/23, 13/14 and 13/14, but
+two of them were fixed while looking at them, so those numbers are not evidence. The honest figures are the ones above:
+9/14 then 11/14 on unseen sentences.
+
 ## Limits and things not done
 
 - One speaker, one microphone, one room. Nothing here says it works for other voices, accents or phones.
