@@ -124,7 +124,20 @@ microphone: treat 64% as a rough indication, not a measured accuracy. The fixes 
 words (seventy, one, fifth, twentieth) and a guard that makes the agent ask when an unknown word sits right before a
 number. The missing "next" cannot be fixed in code; the spoken read-back ("Monday, 02 November") is what catches it.
 Scores of `extractor-v2` on the first holdout are not a fair test, because I fixed it while looking at those clips.
-A second fresh set is planned in `eval/HOLDOUT-2.md`. Eighty and ninety spellings are unverified guesses.
+Eighty and ninety spellings are unverified guesses (eighty, "எயிட்டி", did come out right in the second set).
+
+### Second holdout result (14 new sentences, frozen code at tag `extractor-v2`)
+
+| What | Correct | Asked again | Confidently wrong |
+|---|---|---|---|
+| Amount | 12 / 14 | 1 | 1 (fifty thousand heard as 100,000) |
+| Day | 12 / 14 | 2 | 0 |
+| Both right | **11 / 14 (79%)** | | |
+
+Failures: the transcript said "fifty fifty thousand" (the two fifties were added up to 100,000), the spelling
+"இன்னிக்கு" for today and the ordinal "டென்த்" (tenth) were not known. 14 clips, one speaker: treat 64% then 79% as
+"somewhere between two-thirds and four-fifths on my own voice", not as an accuracy figure. Anything fixed after this
+point is untested until a third fresh set is recorded.
 
 ## Limits and things not done
 
