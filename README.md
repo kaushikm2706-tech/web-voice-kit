@@ -120,8 +120,11 @@ planned in `eval/HOLDOUT.md`, and that result will be added here, whatever it sh
 So the dev-set numbers above were optimistic. Five clips failed: three because words the extractor did not know
 (seventy, "one" before thousand, the ordinals fifth and twentieth), one because the transcript had no "next", and one
 because an unknown word before "five thousand" silently turned 75,000 into 5,000. Only 14 clips, one speaker, one
-microphone: treat 64% as a rough indication, not a measured accuracy. The fixes come in a later commit, and any claim
-after them needs a new fresh set.
+microphone: treat 64% as a rough indication, not a measured accuracy. The fixes are commit `1d62d48` (tag `extractor-v2`): new
+words (seventy, one, fifth, twentieth) and a guard that makes the agent ask when an unknown word sits right before a
+number. The missing "next" cannot be fixed in code; the spoken read-back ("Monday, 02 November") is what catches it.
+Scores of `extractor-v2` on the first holdout are not a fair test, because I fixed it while looking at those clips.
+A second fresh set is planned in `eval/HOLDOUT-2.md`. Eighty and ninety spellings are unverified guesses.
 
 ## Limits and things not done
 
