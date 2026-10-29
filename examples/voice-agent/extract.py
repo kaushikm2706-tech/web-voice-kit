@@ -61,13 +61,18 @@ _add("தர்ட்டி", "n", 30)
 _add("ஃபோர்ட்டி", "n", 40)
 _add("ஃபிஃப்டி ஃபிப்டி", "n", 50)
 _add("சிக்ஸ்டி", "n", 60)
+_add("செவன்ட்டி செவன்டி செவென்டி", "n", 70)   # seventy: seen in the holdout (செவன்ட்டி)
 _add("ஹண்ட்ரட் ஹன்ட்ரட் ஹண்ட்ரெட்", "m", 100)
 _add("தௌசண்ட் தவுசண்ட் தௌசன்ட் தவுசன்ட்", "m", 1000)
 _add("லாக் லட்சம்", "m", 100000)
 _add("ஆயிரம்", "m", 1000)
 
 # short words, matched exactly on the raw token (their skeleton is too short to be safe)
-_RAW_NUM = {"டூ": ("n", 2), "டு": ("n", 2), "நைன்": ("n", 9), "எட்": ("n", 8), "ஏட்": ("n", 8),
+# eighty / ninety share a skeleton with eight ("yt") or are short, so they are matched on the whole word.
+# These spellings are my phonetic guesses, NOT seen in a recording (unverified).
+_TENS_RAW = {"எய்ட்டி": 80, "எயிட்டி": 80, "ஏய்ட்டி": 80, "எய்டி": 80, "எயிடி": 80,
+             "நைன்ட்டி": 90, "நைன்டி": 90, "நைண்ட்டி": 90}
+_RAW_NUM = {"ஒன்": ("n", 1), "டூ": ("n", 2), "டு": ("n", 2), "நைன்": ("n", 9), "எட்": ("n", 8), "ஏட்": ("n", 8),
             "ஒரு": ("n", 1), "நூறு": ("m", 100), "ஐநூறு": ("n", 500), "இரண்டாயிரம்": ("n", 2000)}
 
 _EN_NUM = {"one": ("n", 1), "two": ("n", 2), "three": ("n", 3), "four": ("n", 4), "five": ("n", 5),
@@ -89,6 +94,12 @@ for _names, _wd in (("monday mon", _MON), ("tuesday tue tues", _TUE), ("wednesda
     for _n in _names.split():
         _EN_DAY_WORDS[_n] = _wd
 _ORDINAL_SKEL = {"ptnt": 15, "tnt": 10, "ptt": 5}   # fifteenth, tenth (only forms seen so far)
+# fifth and twentieth, matched on the raw spelling (seen in the holdout: ஃபிஃப்த்துக்கு, டுவெண்ட்டியத்துக்கு).
+# Must be checked before the number words: "ஃபிஃப்த்" is fifth, "ஃபிஃப்டீன்" is fifteen.
+# thirtieth is my guess by analogy, not seen in a recording (unverified).
+_ORDINAL_RAW = [(("ஃபிஃப்த்", "ஃபிப்த்", "பிஃப்த்", "பிப்த்"), 5),
+                (("டுவெண்ட்டியத்", "டுவென்டியத்", "டுவெண்டியத்", "ட்வென்டியத்", "ட்வென்ட்டியத்"), 20),
+                (("தர்ட்டியத்", "தேர்ட்டியத்"), 30)]
 
 
 def _is_latin(t):
@@ -120,6 +131,9 @@ def _day_at(toks, i):
         return {"kind": "tomorrow", "conf": hi}, 1
     if t.startswith(("இன்று", "இன்றை", "இன்னை")) or t == "today":
         return {"kind": "today", "conf": hi}, 1
+    for prefixes, dom in _ORDINAL_RAW:
+        if t.startswith(prefixes):
+            return {"kind": "date", "date": dom, "conf": hi}, 1
     # Friday ("ஃப்ரைடே") and forty ("ஃபோர்ட்டி") share the skeleton "prt": tell them apart on the raw spelling.
     if t.startswith(("ஃப்ரை", "ப்ரை", "ஃப்ரெ", "ப்ரெ", "ஃபிரை", "பிரை", "ஃபிரெ", "பிரெ")):
         return {"kind": "weekday", "weekday": _FRI, "conf": hi}, 1
@@ -172,6 +186,8 @@ def _num_token(t):
     for raw in ("ஐநூறு", "இரண்டாயிரம்"):
         if t.startswith(raw):
             return _RAW_NUM[raw]
+    if t in _TENS_RAW:
+        return ("n", _TENS_RAW[t])
     if t in _RAW_NUM:
         return _RAW_NUM[t]
     s = skel(t)
@@ -201,9 +217,27 @@ def _is_rupee(t):
     return t == "₹" or t.startswith(("ரூ", "ரு", "rupee", "rs", "inr"))
 
 
+# Tamil function words that may sit right before a number without being a missed number word.
+_FUNCTION_PREFIX = ("நான்", "நாம்", "நாங்க", "எனக்கு", "அடுத்த", "இந்த", "ரூ", "ரு", "மொத்த", "கண்டிப்")
+
+
+def _unknown_word_before(toks, start, consumed):
+    """True when the word right before the number run looks like a number word we do not know.
+    Real case: "செவன்ட்டி ஃபைவ் தௌசண்ட்" (seventy five thousand) was read as 5,000 because
+    "செவன்ட்டி" was unknown and silently skipped. An unknown word there means: ask, never guess."""
+    j = start - 1
+    if j < 0 or j in consumed:
+        return False
+    t = toks[j]
+    if not t or t[0].isascii() or t == "₹" or t.startswith(_FUNCTION_PREFIX) or _is_rupee(t):
+        return False
+    return len(skel(t)) >= 4
+
+
 def parse(text: str):
     toks = tokens(text)
     day, day_idx = None, None
+    consumed = set()
     events = []          # ("num", kind, value, idx) | ("rupee", idx)
     i = 0
     while i < len(toks):
@@ -212,6 +246,7 @@ def parse(text: str):
             if day is None:
                 day, day_idx = d[0], i
                 day["modifier"] = _modifier(toks, i)
+            consumed.update(range(i, i + d[1]))
             i += d[1]
             continue
         if _is_rupee(toks[i]):
@@ -248,6 +283,8 @@ def parse(text: str):
         # Real case from a live call: "three thousand" came back as just "thousand". Do not guess 1,000: ask.
         first = best[0]
         if first[1] == "m" and not toks[first[3]].startswith(("ஆயிரம்", "நூறு")):
+            amount, unsure = None, True
+        elif _unknown_word_before(toks, first[3], consumed):
             amount, unsure = None, True
     return {"amount": amount, "day": day, "amount_unsure": unsure}
 

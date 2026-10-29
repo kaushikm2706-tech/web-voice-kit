@@ -38,4 +38,22 @@ _f = ex.turn("தௌசண்ட் ரூபீஸ்", _t, 2500, {"kind": "tom
 r.append(check("bare 'thousand' also drops a stale earlier amount", _f["amount"] is None))
 r.append(check("'three thousand' still fine", ex.parse("த்ரீ தௌசண்ட் ருபீஸ்")["amount"] == 3000))
 r.append(check("Tamil 'ஆயிரம்' alone is a normal 1000", ex.parse("ஆயிரம் ரூபாய்")["amount"] == 1000))
+# --- found by the holdout set (eval/holdout-set.json) ---
+_t2 = _dt.date(2026, 10, 28)
+_h = ex.parse("மந்த் எண்டில் செவன்ட்டி ஃபைவ் தௌசண்ட் ருபீஸ் தரேன்")
+r.append(check("holdout: seventy five thousand = 75000, not 5000", _h["amount"] == 75000))
+r.append(check("holdout: unknown word before a number run -> ask, never a silent wrong amount",
+               ex.parse("மந்த் எண்டில் சிக்ஸ்டீன் தௌசண்ட் ருபீஸ்")["amount"] is None))
+r.append(check("holdout: 'ஒன்' is one: 1200", ex.parse("தர்ஸ்டேக்கு ஒன் தௌசண்ட் டூ ஹண்ட்ரட் ருபீஸ்")["amount"] == 1200))
+r.append(check("holdout: fifth is the 5th", ex.parse("ஃபிஃப்த்துக்கு டுவெண்ட்டி தௌசண்ட்")["day"] == {"kind": "date", "date": 5, "conf": "high", "modifier": None}))
+r.append(check("holdout: twentieth is the 20th", ex.parse("டுவெண்ட்டியத்துக்கு தேர்ட்டி தௌசண்ட்")["day"]["date"] == 20))
+r.append(check("fifteen is still an amount, fifth did not steal it", ex.parse("ஃபிஃப்டீன் ஹண்ட்ரட் ருபீஸ்")["amount"] == 1500))
+r.append(check("eight hundred is not eighty", ex.parse("எயிட் ஹண்ட்ரட் ருபீஸ்")["amount"] == 800))
+# the new guard must not fire on ordinary sentences
+for _txt, _amt in (("நான் நாளைக்கு சிக்ஸ் தௌசண்ட் ஃபைவ் ஹண்ட்ரட் ருபீஸ் கட்டுவேன்", 6500),
+                   ("நான் சண்டேக்கு ₹1,000 தரேன்", 1000),
+                   ("i will pay ₹5,000 on friday", 5000),
+                   ("இன்னைக்கு நைன் ஹண்ட்ரட் ருபீஸ் தரேன்", 900),
+                   ("நெக்ஸ்ட் வீக் டூ தௌசண்ட் 500 ரூபீஸ் பே பண்ணுற", 2500)):
+    r.append(check("guard has no false alarm: " + _txt[:28], ex.parse(_txt)["amount"] == _amt))
 print("ALL PASS" if all(r) else "SOME FAILED"); sys.exit(0 if all(r) else 1)

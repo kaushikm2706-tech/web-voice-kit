@@ -67,4 +67,9 @@ if yn:
         if not ok:
             print(f"- {r['transcript']}  wanted {r['note']}  got {got}")
     print(f"  correct: {pct(len(yn)-bad, len(yn))}   (an 'unclear' makes the agent ask again)")
-print("\nNOTE: the extractor was tuned while looking at these same clips, so these numbers are optimistic.")
+import os as _os
+if "holdout" in _os.path.basename(sys.argv[1] if len(sys.argv) > 1 else ""):
+    print("\nNOTE: this was a fresh set only for tag extractor-v1 (9/14 both correct). Code changed after it was scored,")
+    print("so today's score on it is NOT a fair test. A new fresh set is needed for any claim about the current code.")
+else:
+    print("\nNOTE: the extractor was tuned while looking at these same clips, so these numbers are optimistic.")
